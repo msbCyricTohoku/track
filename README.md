@@ -2,7 +2,7 @@
 
 A simple directory tracking tool and lightweight alternative to Git, designed for near-instantaneous state snapshots.
 
-**by msb — Dec 2025**
+**by msb - Dec 2025**
 
 ---
 
@@ -20,3 +20,6 @@ Build the tool using the provided Makefile:
 
 ```bash
 make
+
+---
+Enjoy! -- msb
