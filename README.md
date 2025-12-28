@@ -20,6 +20,6 @@ Build the tool using the provided Makefile:
 
 ```bash
 make
-
+```
 ---
 Enjoy! -- msb
