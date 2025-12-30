@@ -16,6 +16,7 @@
 #define KMAG "\x1B[35m"
 #define KBLU "\x1B[34m"
 #define KRED "\x1B[31m"
+#define KCYN "\x1B[36m"
 
 void copy_file(const char *src, const char *dst) {
   int in = open(src, O_RDONLY);
@@ -35,7 +36,6 @@ void copy_file(const char *src, const char *dst) {
     ssize_t off = 0;
     while (off < r) {
       ssize_t byteR = r - off;
-      // printf("bytes write %zd\n", off);
       off += write(out, buffer + off, byteR);
     }
   }
@@ -51,8 +51,7 @@ void copy_recursive(const char *src, const char *dst) {
     return;
 
   if (S_ISDIR(st.st_mode)) {
-    // create the destination directory
-    mkdir(dst, 0755); // using 0755 for directories not sure if 0644 is better
+    mkdir(dst, 0755);
 
     DIR *d = opendir(src);
     if (!d)
@@ -60,15 +59,12 @@ void copy_recursive(const char *src, const char *dst) {
 
     struct dirent *entry;
     while ((entry = readdir(d)) != NULL) {
-      // skip "." and ".." AND skip the ".track" folder itself
       if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
           strcmp(entry->d_name, ".track") == 0)
-        continue; // le jump :D, next iter
+        continue; // le jump :D
 
       char new_src[1024];
       char new_dst[1024];
-
-      printf("Tracking %s\n", entry->d_name);
 
       snprintf(new_src, sizeof(new_src), "%s/%s", src, entry->d_name);
       snprintf(new_dst, sizeof(new_dst), "%s/%s", dst, entry->d_name);
@@ -81,7 +77,67 @@ void copy_recursive(const char *src, const char *dst) {
   }
 }
 
-int main() {
+// lists all snapshots inside .track
+void list_log() {
+  DIR *d = opendir(".track");
+  if (!d) {
+    printf(KRED "No tracks found. Try tracking something first!\n" KNRM);
+    return;
+  }
+
+  printf(KCYN "--- TRACK HISTORY ---\n" KNRM);
+  struct dirent *entry;
+  int count = 0;
+  while ((entry = readdir(d)) != NULL) {
+    if (entry->d_name[0] == '.')
+      continue; // skip hidden files
+    printf(" Snapshot: " KMAG "%s" KNRM "\n", entry->d_name);
+    count++;
+  }
+  if (count == 0)
+    printf("Nothing tracked yet.\n");
+  closedir(d);
+}
+
+// compares current dir with specific snapshot using system diff
+void diff_snapshot(const char *timestamp) {
+  char cmd[2048];
+  char path[512];
+
+  snprintf(path, sizeof(path), ".track/%s", timestamp);
+
+  struct stat st;
+  if (stat(path, &st) != 0) {
+    printf(KRED "Error: Snapshot %s does not exist.\n" KNRM, timestamp);
+    return;
+  }
+
+  printf(KCYN "Comparing current directory with snapshot: %s\n" KNRM,
+         timestamp);
+  printf("--------------------------------------------------\n");
+
+  // diff posix, excluse .track folder
+  snprintf(cmd, sizeof(cmd), "diff -r -u --exclude=\".track\" %s .", path);
+  system(cmd);
+}
+
+int main(int argc, char *argv[]) {
+  // logic to handle commands: log and diff
+  if (argc > 1) {
+    if (strcmp(argv[1], "log") == 0) {
+      list_log();
+      return 0;
+    } else if (strcmp(argv[1], "diff") == 0) {
+      if (argc < 3) {
+        printf(KRED "Usage: %s diff <timestamp_folder>\n" KNRM, argv[0]);
+        return 1;
+      }
+      diff_snapshot(argv[2]);
+      return 0;
+    }
+  }
+
+  // create a snapshot
   time_t rawtime;
   struct tm *timeinfo;
   char timestamp[20];
@@ -91,12 +147,9 @@ int main() {
   timeinfo = localtime(&rawtime);
   strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H%M%S", timeinfo);
 
-  // ensure the base .track directory exists
   mkdir(".track", 0755);
-
   snprintf(dest, sizeof(dest), ".track/%s", timestamp);
 
-  // create the specific snapshot directory
   if (mkdir(dest, 0755) != 0) {
     fprintf(stderr, KRED "Error: Could not create backup directory %s\n" KNRM,
             dest);
@@ -104,12 +157,10 @@ int main() {
   }
 
   printf(KMAG "--------------------------------------\n" KNRM);
-  printf(KMAG "|     TRACK V0.1 Developed by msb    |\n" KNRM);
+  printf(KMAG "|      TRACK V0.1 Developed by msb    |\n" KNRM);
   printf(KMAG "--------------------------------------\n" KNRM);
 
   printf("Tracking to: %s\n", dest);
-
-  // skip .track inside copy_recursive to avoid recursion loops
   copy_recursive(".", dest);
 
   printf(KBLU "You tracked! snapshot created Boss!!!\n" KNRM);
