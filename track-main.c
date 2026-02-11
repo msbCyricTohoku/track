@@ -163,7 +163,7 @@ void diff_snapshot(const char *timestamp) {
 int main(int argc, char *argv[]) {
 
   printf(KMAG "--------------------------------------\n" KNRM);
-  printf(KMAG "\x1b[43m" "|      TRACK V0.1 Developed by msb    |\n" "\x1b[40m" KNRM);
+  printf(KMAG "|      TRACK V0.1 Developed by msb    |\n" KNRM);
   printf(KMAG "--------------------------------------\n" KNRM);
 
 
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
   // printf(KCYN "current dir time %jd\n" KNRM, cur_stat.st_mtime);
   //  printf(KCYN "last snap time %jd\n" KNRM, last_snap_time);
 
-  /* if prev snap exist and no change then skip */
+  /* if prev snap exist and no change then skip st_mtime aka modification time */
     if (last_snap_time != 0 && cur_stat.st_mtime <= last_snap_time) {
       
   printf(KYLW "No changes detected since last snapshot. Skipping.\n" KNRM);
