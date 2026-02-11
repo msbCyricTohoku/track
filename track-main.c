@@ -17,6 +17,7 @@
 #define KBLU "\x1B[34m"
 #define KRED "\x1B[31m"
 #define KCYN "\x1B[36m"
+#define KYLW "\x1B[33m"
 
 /* check if file modified using stat */
 void file_mod(const char *path, time_t mtime){
@@ -160,6 +161,12 @@ void diff_snapshot(const char *timestamp) {
 }
 
 int main(int argc, char *argv[]) {
+
+  printf(KMAG "--------------------------------------\n" KNRM);
+  printf(KMAG "\x1b[43m" "|      TRACK V0.1 Developed by msb    |\n" "\x1b[40m" KNRM);
+  printf(KMAG "--------------------------------------\n" KNRM);
+
+
   // logic to handle commands: log and diff
   if (argc > 1) {
     if (strcmp(argv[1], "log") == 0) {
@@ -174,6 +181,54 @@ int main(int argc, char *argv[]) {
       return 0;
     }
   }
+
+  /* get mtime of current dir */
+  struct stat cur_stat;
+
+  if(stat(".", &cur_stat) != 0){
+    perror("stat . failed");
+    return 1;
+  }
+
+
+  /* check latest snapshot */
+  time_t last_snap_time =0;
+
+  DIR *track_dir = opendir(".track");
+
+  if(track_dir) {
+    struct dirent *entry;
+    
+    while ((entry = readdir(track_dir)) != NULL) {
+      if (entry->d_type != DT_DIR) continue;
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
+      
+    struct tm tm;
+
+  memset(&tm, 0, sizeof(tm));
+      
+    /* snapshot folders are named %Y-%m-%d_%H%M%S */
+      if (strptime(entry->d_name, "%Y-%m-%d_%H%M%S", &tm) == NULL) continue;
+
+      time_t snap_t = mktime(&tm);
+
+      if (snap_t > last_snap_time) last_snap_time = snap_t;
+    }
+    closedir(track_dir);
+  }
+
+  // printf(KCYN "current dir time %jd\n" KNRM, cur_stat.st_mtime);
+  //  printf(KCYN "last snap time %jd\n" KNRM, last_snap_time);
+
+  /* if prev snap exist and no change then skip */
+    if (last_snap_time != 0 && cur_stat.st_mtime <= last_snap_time) {
+      
+  printf(KYLW "No changes detected since last snapshot. Skipping.\n" KNRM);
+    return 0;
+  }
+
+    
 
   // create a snapshot
   time_t rawtime;
@@ -195,14 +250,31 @@ int main(int argc, char *argv[]) {
   }
 
 
+  /* */
+  // char latest_stat[1024];
+  //snprintf(latest_stat,sizeof(latest_stat), "stat .");
 
-  printf(KMAG "--------------------------------------\n" KNRM);
-  printf(KMAG "|      TRACK V0.1 Developed by msb    |\n" KNRM);
-  printf(KMAG "--------------------------------------\n" KNRM);
+  //int status = system(latest_stat);
+  //(void)status; /* cast the int to void hehe */
+ 
+  //time_t in_mtime;
+  //stat("ben.txt", &in_mtime);
+  //  file_mod("ben.txt", in_mtime);
+  // printf("%jd \n", in_mtime);
+    //     printf("File has been modified!\\n");
+    //}
+  //struct stat benfile;
+  //stat(".", &benfile);
+   
+  //printf("time of mod: %jd \n", benfile.st_mtime); /* this number changes if file modified */
+  /* */
 
   printf("Tracking to: %s\n", dest);
   copy_recursive(".", dest);
 
+
+  printf(KRED "dest before last snap: %s\n" KNRM,dest);
+  
   printf(KBLU "You tracked! snapshot created Boss!!!\n" KNRM);
 
   check_last_snapshot(dest);
@@ -210,31 +282,6 @@ int main(int argc, char *argv[]) {
 
   printf("Latest tracked dir is: %s\n", dest);
 
-  char latest_stat[1024];
-  snprintf(latest_stat,sizeof(latest_stat), "stat .");
-
-  
-
-  int status = system(latest_stat);
-  (void)status; /* cast the int to void hehe */
-  
-
-
-  time_t in_mtime;
-
-  //stat("ben.txt", &in_mtime);
-
-  //  file_mod("ben.txt", in_mtime);
-
-  // printf("%jd \n", in_mtime);
-    //     printf("File has been modified!\\n");
-    //}
-
-  struct stat benfile;
-  stat(".", &benfile);
-   
-  printf("time of mod: %jd \n", benfile.st_mtime); /* this number changes if file modified */
-
-  
+ 
   return 0;
 }
