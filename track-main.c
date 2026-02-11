@@ -18,6 +18,43 @@
 #define KRED "\x1B[31m"
 #define KCYN "\x1B[36m"
 
+/* check if file modified using stat */
+void file_mod(const char *path, time_t mtime){
+
+  struct stat file_stat;
+  if(stat(path, &file_stat)){
+      perror("file_mode failed.");
+      return -1; /* err */
+    }
+  return file_stat.st_mtime > mtime;
+}
+
+/* check latest snapshot */
+void check_last_snapshot(char *dst){
+
+  DIR *d = opendir(".track");
+
+  if (!d) printf(KRED "NO .track folder here" KNRM);
+
+  struct dirent *entry;
+
+  dst[0] = '\0';
+
+  // printf("check snap  %s \n", dst);
+
+  while((entry = readdir(d)) != NULL){
+    if (entry->d_name[0] == '.') continue;
+
+   if(strcmp(entry->d_name, dst) > 0) {
+      //printf("here\n");
+     
+     //	printf("the latest track here %s \n", entry->d_name);
+     strcpy(dst, entry->d_name);  
+      }
+  }
+  closedir(d);
+}
+
 void copy_file(const char *src, const char *dst) {
   int in = open(src, O_RDONLY);
   if (in < 0)
@@ -118,7 +155,8 @@ void diff_snapshot(const char *timestamp) {
 
   // diff posix, excluse .track folder
   snprintf(cmd, sizeof(cmd), "diff -r -u --exclude=\".track\" %s .", path);
-  system(cmd);
+  int systemcallint = system(cmd);
+  printf("system out: %d \n", systemcallint);
 }
 
 int main(int argc, char *argv[]) {
@@ -156,6 +194,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+
+
   printf(KMAG "--------------------------------------\n" KNRM);
   printf(KMAG "|      TRACK V0.1 Developed by msb    |\n" KNRM);
   printf(KMAG "--------------------------------------\n" KNRM);
@@ -165,5 +205,36 @@ int main(int argc, char *argv[]) {
 
   printf(KBLU "You tracked! snapshot created Boss!!!\n" KNRM);
 
+  check_last_snapshot(dest);
+    
+
+  printf("Latest tracked dir is: %s\n", dest);
+
+  char latest_stat[1024];
+  snprintf(latest_stat,sizeof(latest_stat), "stat .");
+
+  
+
+  int status = system(latest_stat);
+  (void)status; /* cast the int to void hehe */
+  
+
+
+  time_t in_mtime;
+
+  //stat("ben.txt", &in_mtime);
+
+  //  file_mod("ben.txt", in_mtime);
+
+  // printf("%jd \n", in_mtime);
+    //     printf("File has been modified!\\n");
+    //}
+
+  struct stat benfile;
+  stat(".", &benfile);
+   
+  printf("time of mod: %jd \n", benfile.st_mtime); /* this number changes if file modified */
+
+  
   return 0;
 }
