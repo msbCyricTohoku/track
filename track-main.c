@@ -160,6 +160,20 @@ void diff_snapshot(const char *timestamp) {
   printf("system out: %d \n", systemcallint);
 }
 
+void commit_comment(const char* dest){
+   FILE *ftpr;
+  ftpr = fopen(".track/track.txt", "a");
+
+  char comment[20];
+  printf(KCYN "Enter track comment: " KNRM);
+  scanf("%s", &comment);
+
+  fprintf(ftpr, "| %s >> %s |\n", comment, dest);
+
+  fclose(ftpr);
+
+}
+
 int main(int argc, char *argv[]) {
 
   printf(KMAG "--------------------------------------\n" KNRM);
@@ -269,8 +283,12 @@ int main(int argc, char *argv[]) {
   //printf("time of mod: %jd \n", benfile.st_mtime); /* this number changes if file modified */
   /* */
 
+  commit_comment(timestamp);
+
+ 
   printf("Tracking to: %s\n", dest);
   copy_recursive(".", dest);
+
 
 
   printf(KRED "dest before last snap: %s\n" KNRM,dest);
@@ -282,6 +300,15 @@ int main(int argc, char *argv[]) {
 
   printf("Latest tracked dir is: %s\n", dest);
 
+
+  struct stat test;
+
+  stat("track", &test);
+
+  printf("size %jd\n", test.st_size);
+
+  printf("mode %jd\n", test.st_blksize);
+ 
  
   return 0;
 }
