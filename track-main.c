@@ -3,6 +3,8 @@
 // offers super fast snapshot
 // by msb -- Dec 2025
 
+#define _XOPEN_SOURCE 700
+#define _GNU_SOURCE
 #include <dirent.h>   // opendir, readdir, closedir
 #include <fcntl.h>    // open
 #include <stdio.h>    // printf
@@ -20,7 +22,7 @@
 #define KYLW "\x1B[33m"
 
 /* check if file modified using stat */
-void file_mod(const char *path, time_t mtime){
+int file_mod(const char *path, time_t mtime){
 
   struct stat file_stat;
   if(stat(path, &file_stat)){
@@ -166,7 +168,8 @@ void commit_comment(const char* dest){
 
   char comment[20];
   printf(KCYN "Enter track comment: " KNRM);
-  scanf("%s", &comment);
+  int scanfval = scanf("%s", comment);
+  (void) scanfval;
 
   fprintf(ftpr, "| %s >> %s |\n", comment, dest);
 
@@ -284,31 +287,21 @@ int main(int argc, char *argv[]) {
   /* */
 
   commit_comment(timestamp);
-
  
   printf("Tracking to: %s\n", dest);
   copy_recursive(".", dest);
 
-
-
-  printf(KRED "dest before last snap: %s\n" KNRM,dest);
+  //  printf(KRED "dest before last snap: %s\n" KNRM,dest);
   
-  printf(KBLU "You tracked! snapshot created Boss!!!\n" KNRM);
+  printf(KBLU "You tracked! snapshot created.\n" KNRM);
 
   check_last_snapshot(dest);
     
-
-  printf("Latest tracked dir is: %s\n", dest);
-
-
-  struct stat test;
-
-  stat("track", &test);
-
-  printf("size %jd\n", test.st_size);
-
-  printf("mode %jd\n", test.st_blksize);
- 
+  //  printf("Latest tracked dir is: %s\n", dest);
+  // struct stat test;
+  // stat("track", &test);
+  // printf("size %jd\n", test.st_size);
+  // printf("mode %jd\n", test.st_blksize);
  
   return 0;
 }

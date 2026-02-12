@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -O2
 LDFLAGS = -lm
 
 # Target executable name
-TARGET = track
+TARGET = trk
 
 # Source and object files
 SRCS = track-main.c
