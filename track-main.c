@@ -166,10 +166,14 @@ void commit_comment(const char* dest){
    FILE *ftpr;
   ftpr = fopen(".track/track.txt", "a");
 
-  char comment[20];
+  char comment[1024];
   printf(KCYN "Enter track comment: " KNRM);
-  int scanfval = scanf("%s", comment);
-  (void) scanfval;
+  //  int scanfval = scanf("%s", comment);
+  // (void) scanfval;
+
+  if(fgets(comment, sizeof(comment), stdin)) {
+    comment[strcspn(comment, "\n")] = 0;
+  }
 
   fprintf(ftpr, "| %s >> %s |\n", comment, dest);
 
