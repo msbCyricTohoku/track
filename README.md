@@ -21,9 +21,9 @@ make
 ```
 ---
 ```
-track
-track log
-track diff 2025-12-30_212338
+trk
+trk log
+trk diff 2025-12-30_212338
 ```
 ---
 Enjoy! -- msb
